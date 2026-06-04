@@ -1,46 +1,100 @@
+# EpicFight Flight Sync - BugStudio
 
-Source installation information for modders
--------------------------------------------
-This code follows the Minecraft Forge installation methodology. It will apply
-some small patches to the vanilla MCP source code, giving you and it access 
-to some of the data and functions you need to build a successful mod.
+Parche de compatibilidad para Epic Fight que sincroniza el vuelo de jugadores remotos.
 
-Note also that the patches are built against "un-renamed" MCP source code (aka
-SRG Names) - this means that you will not be able to read them directly against
-normal code.
+Evita que otros jugadores se vean caminando por el aire cuando están volando con creativo, `/fly`, plugins o tags.
 
-Setup Process:
-==============================
+## ¿Qué hace?
 
-Step 1: Open your command-line and browse to the folder where you extracted the zip file.
+Este mod corrige un problema visual de Epic Fight donde un jugador remoto puede verse caminando por el aire en lugar de usar una animación de vuelo.
 
-Step 2: You're left with a choice.
-If you prefer to use Eclipse:
-1. Run the following command: `./gradlew genEclipseRuns`
-2. Open Eclipse, Import > Existing Gradle Project > Select Folder 
-   or run `gradlew eclipse` to generate the project.
+El servidor detecta cuando un jugador está volando y sincroniza ese estado con los clientes cercanos para que Epic Fight pueda mostrar la animación correcta.
 
-If you prefer to use IntelliJ:
-1. Open IDEA, and import project.
-2. Select your build.gradle file and have it import.
-3. Run the following command: `./gradlew genIntellijRuns`
-4. Refresh the Gradle Project in IDEA if required.
+## Características
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can 
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-(this does not affect your code) and then start the process again.
+* Sincronización server -> client del estado de vuelo.
+* Soporte para vuelo vanilla, creativo, `/fly`, plugins y scoreboard tags.
+* Config sincronizada desde el servidor.
+* Comando `/efsync reload`.
+* ACK cliente-servidor para confirmar recepción de paquetes.
+* Modo `ABILITIES`.
+* Fallback opcional con `HYBRID` y `MOTION_OVERRIDE`.
+* Compatible con Forge/Mohist 1.20.1.
 
-Mapping Names:
-=============================
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license, if you do not agree with it you can change your mapping names to other crowdsourced names in your 
-build.gradle. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
+## Requisitos
 
-Additional Resources: 
-=========================
-Community Documentation: https://docs.minecraftforge.net/en/1.20.1/gettingstarted/
+* Minecraft 1.20.1
+* Forge 47.x
+* Java 17
+* Epic Fight 20.14.17
+
+## Dependencias locales
+
+Para compilar, coloca estos archivos dentro de la carpeta `libs/`:
+
+```txt
+epic-fight-20.14.17-mc1.20.1-forge.jar
+epic-fight-invincible-lib-20.14.8.2-mc1.20.1-forge.jar
+```
+
+Estos `.jar` no están incluidos en el repositorio.
+
+## Compilar
+
+Desde la raíz del proyecto:
+
+```powershell
+.\gradlew clean reobfJar
+```
+
+El `.jar` final se genera en:
+
+```txt
+build/libs/
+```
+
+## Configuración
+
+El archivo de configuración se genera en:
+
+```txt
+config/epicfight_flight_sync.properties
+```
+
+Opciones principales:
+
+```properties
+debug=false
+syncServerConfigToClients=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+remoteFlightMode=ABILITIES
+forceRemoteFlightMotion=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+```
+
+## Comando
+
+```mcfunction
+/efsync reload
+```
+
+Recarga la configuración del servidor y la sincroniza con los clientes conectados.
+
+## Autor
+
+BugStudio
+
+## Licencia
+
+MIT
+s://docs.minecraftforge.net/en/1.20.1/gettingstarted/
 LexManos' Install Video: https://youtu.be/8VEdtQLuLO0
 Forge Forums: https://forums.minecraftforge.net/
 Forge Discord: https://discord.minecraftforge.net/
