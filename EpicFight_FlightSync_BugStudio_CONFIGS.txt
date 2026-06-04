@@ -1,0 +1,766 @@
+EpicFight Flight Sync - BugStudio
+Guia completa de configuracion
+Archivo: config/epicfight_flight_sync.properties
+
+============================================================
+DESCRIPCION GENERAL
+============================================================
+
+Este mod sincroniza el estado de vuelo de jugadores remotos para Epic Fight.
+
+Problema que corrige:
+- Un jugador vuela usando creativo, /fly, plugin o tag.
+- Otros jugadores lo ven caminando por el aire.
+- El mod detecta el vuelo en servidor y manda ese estado a los clientes.
+- El cliente aplica ese estado al RemotePlayer para que Epic Fight pueda mostrar la animacion correcta.
+
+Importante:
+- El mod NO da vuelo.
+- El mod NO reemplaza Epic Fight.
+- El mod NO crea animaciones nuevas.
+- El mod solo sincroniza/corrige el estado visual del vuelo remoto.
+
+============================================================
+CONFIG COMPLETA DE EJEMPLO
+============================================================
+
+debug=false
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=ABILITIES
+forceRemoteFlightMotion=false
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=CREATIVE_IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+============================================================
+EXPLICACION DE CADA OPCION
+============================================================
+
+debug
+Valores:
+- true
+- false
+
+Que hace:
+Activa o desactiva logs detallados del mod.
+
+Uso recomendado:
+- true: para pruebas, debug, revisar packets, ACK, reload y estados de vuelo.
+- false: para uso normal en servidor.
+
+Ejemplo:
+debug=true
+
+
+------------------------------------------------------------
+
+detectVanillaFlying
+Valores:
+- true
+- false
+
+Que hace:
+Permite que el servidor detecte si un jugador esta volando mediante el estado vanilla de Minecraft.
+
+Detecta normalmente:
+- Modo creativo.
+- /fly de algunos plugins/mods.
+- Cualquier sistema que active player abilities flying.
+
+Uso recomendado:
+Dejar en true.
+
+Ejemplo:
+detectVanillaFlying=true
+
+
+------------------------------------------------------------
+
+detectScoreboardTag
+Valores:
+- true
+- false
+
+Que hace:
+Permite detectar vuelo usando un tag de scoreboard.
+
+Sirve cuando:
+- Un plugin de vuelo no modifica bien abilities.flying.
+- Quieres forzar manualmente que un jugador sea tratado como "volando".
+- Quieres compatibilidad con sistemas externos.
+
+Uso recomendado:
+Dejar en true si quieres fallback manual.
+
+Ejemplo:
+detectScoreboardTag=true
+
+
+------------------------------------------------------------
+
+flightTag
+Valores:
+- Cualquier texto valido como tag de scoreboard.
+
+Valor recomendado:
+epicfight_flying
+
+Que hace:
+Define el nombre del tag que el mod revisa cuando detectScoreboardTag=true.
+
+Si un jugador tiene este tag, el mod lo considera en vuelo visual aunque el sistema vanilla no lo detecte.
+
+Comando de ejemplo en Minecraft:
+tag <jugador> add epicfight_flying
+tag <jugador> remove epicfight_flying
+
+Uso recomendado:
+Dejar en epicfight_flying salvo que quieras integrarlo con otro sistema.
+
+Ejemplo:
+flightTag=epicfight_flying
+
+
+------------------------------------------------------------
+
+movingSpeedThresholdSq
+Valores:
+- Numero decimal.
+- Ejemplos: 1.0E-4, 0.0001, 0.001, 0.01
+
+Que hace:
+Define el umbral para decidir si un jugador remoto volando esta quieto o moviendose.
+
+El mod usa esto para elegir entre:
+- remoteFlightMovingMotion
+- remoteFlightIdleMotion
+
+Valores mas bajos:
+- Detectan movimiento con cambios muy pequenos.
+- Mas sensible.
+
+Valores mas altos:
+- Requieren mas movimiento para considerarlo "moving".
+- Menos sensible.
+
+Uso recomendado:
+1.0E-4
+
+Ejemplo:
+movingSpeedThresholdSq=1.0E-4
+
+
+------------------------------------------------------------
+
+syncServerConfigToClients
+Valores:
+- true
+- false
+
+Que hace:
+Hace que el servidor sea la autoridad de configuracion.
+
+Si esta en true:
+- El cliente recibe la config del servidor.
+- /efsync reload recarga config del server y la sincroniza a clientes.
+- No dependes de que cada jugador tenga el config local correcto.
+
+Si esta en false:
+- Cada cliente usa su propio config local.
+- No recomendado para servidores.
+
+Uso recomendado:
+true
+
+Ejemplo:
+syncServerConfigToClients=true
+
+
+------------------------------------------------------------
+
+remoteFlightMode
+Valores posibles:
+- ABILITIES
+- HYBRID
+- MOTION_OVERRIDE
+
+Que hace:
+Define como el cliente intenta corregir/mostrar el vuelo del jugador remoto.
+
+Valor: ABILITIES
+Descripcion:
+Ruta mas limpia.
+El cliente marca el RemotePlayer como flying usando abilities y deja que Epic Fight calcule su animacion normal.
+
+Flujo:
+Server detecta vuelo
+-> Cliente recibe FlightStatePacket
+-> Cliente aplica abilities.flying al RemotePlayer
+-> Epic Fight decide la animacion
+
+Recomendado cuando:
+- El vuelo ya se ve bien.
+- Quieres evitar forzar animaciones.
+- Quieres la configuracion mas estable.
+
+Ejemplo:
+remoteFlightMode=ABILITIES
+
+
+Valor: HYBRID
+Descripcion:
+Ruta mixta.
+Primero aplica abilities, pero tambien puede usar motion override si forceRemoteFlightMotion=true.
+
+Recomendado cuando:
+- ABILITIES sincroniza packets pero visualmente Epic Fight no reacciona suficiente.
+- Necesitas un fallback visual.
+
+Ejemplo:
+remoteFlightMode=HYBRID
+
+
+Valor: MOTION_OVERRIDE
+Descripcion:
+Ruta agresiva.
+Fuerza directamente una motion de Epic Fight para el jugador remoto.
+
+Recomendado cuando:
+- ABILITIES no logra cambiar la animacion.
+- HYBRID tampoco da resultado suficiente.
+- Estas testeando poses/animaciones especificas.
+
+Advertencia:
+Puede causar poses raras, pose T, torso torcido, pitch/yaw raro o animaciones estaticas si la motion no encaja.
+
+Ejemplo:
+remoteFlightMode=MOTION_OVERRIDE
+
+
+------------------------------------------------------------
+
+forceRemoteFlightMotion
+Valores:
+- true
+- false
+
+Que hace:
+Fuerza el uso de remoteFlightMovingMotion y remoteFlightIdleMotion.
+
+Si esta en false:
+- En modo ABILITIES, el mod no fuerza motion.
+- Se deja a Epic Fight calcular.
+
+Si esta en true:
+- El cliente intenta aplicar/forzar una motion concreta mientras el jugador remoto vuela.
+- Es util como fallback visual.
+
+Uso recomendado:
+- false con ABILITIES.
+- true con HYBRID o MOTION_OVERRIDE para pruebas.
+
+Ejemplo limpio:
+forceRemoteFlightMotion=false
+
+Ejemplo fallback:
+forceRemoteFlightMotion=true
+
+
+------------------------------------------------------------
+
+remoteFlightMovingMotion
+Valores posibles:
+- FLY
+- FLOAT
+- FALL
+- IDLE
+- CREATIVE_FLY
+- CREATIVE_IDLE
+- NONE
+
+Que hace:
+Define que motion usar cuando el jugador remoto esta volando y moviendose.
+
+Solo importa realmente si:
+- remoteFlightMode=HYBRID con forceRemoteFlightMotion=true
+- remoteFlightMode=MOTION_OVERRIDE
+- o si el codigo activa el override por fallback.
+
+Valores:
+
+FLY
+Motion generica de vuelo.
+
+FLOAT
+Motion de flotar/suspenderse.
+
+FALL
+Motion de caida.
+
+IDLE
+Motion quieta/base.
+
+CREATIVE_FLY
+Motion de vuelo creativo de Epic Fight.
+
+CREATIVE_IDLE
+Motion idle de creativo.
+
+NONE
+No fuerza una motion concreta.
+
+Uso recomendado:
+CREATIVE_FLY
+
+Ejemplo:
+remoteFlightMovingMotion=CREATIVE_FLY
+
+
+------------------------------------------------------------
+
+remoteFlightIdleMotion
+Valores posibles:
+- FLY
+- FLOAT
+- FALL
+- IDLE
+- CREATIVE_FLY
+- CREATIVE_IDLE
+- NONE
+
+Que hace:
+Define que motion usar cuando el jugador remoto esta volando pero quieto.
+
+Solo importa realmente si:
+- remoteFlightMode=HYBRID con forceRemoteFlightMotion=true
+- remoteFlightMode=MOTION_OVERRIDE
+- o si el codigo activa el override por fallback.
+
+Uso recomendado:
+- CREATIVE_IDLE si quieres idle de vuelo creativo.
+- IDLE si CREATIVE_IDLE se ve torcido o demasiado rigido.
+- CREATIVE_FLY si quieres probar que siempre use animacion de vuelo.
+
+Ejemplos:
+remoteFlightIdleMotion=CREATIVE_IDLE
+remoteFlightIdleMotion=IDLE
+remoteFlightIdleMotion=CREATIVE_FLY
+
+
+------------------------------------------------------------
+
+stabilizeRemoteFlightPitch
+Valores:
+- true
+- false
+
+Que hace:
+Intenta estabilizar o fijar el pitch del jugador remoto mientras esta volando.
+
+Pitch = rotacion vertical.
+Ejemplo:
+- Mirar arriba.
+- Mirar abajo.
+- Inclinar cuerpo/camara verticalmente.
+
+Uso recomendado:
+false, salvo que el jugador remoto se vea torcido verticalmente.
+
+Ejemplo:
+stabilizeRemoteFlightPitch=false
+
+
+------------------------------------------------------------
+
+remoteFlightPitch
+Valores:
+- Numero decimal.
+- Ejemplos: 0.0, -20.0, 20.0, 45.0
+
+Que hace:
+Valor de pitch que se usa si stabilizeRemoteFlightPitch=true.
+
+Uso recomendado:
+0.0 para neutral.
+
+Ejemplo:
+remoteFlightPitch=0.0
+
+
+------------------------------------------------------------
+
+stabilizeRemoteFlightYaw
+Valores:
+- true
+- false
+
+Que hace:
+Intenta estabilizar el yaw del jugador remoto mientras vuela.
+
+Yaw = rotacion horizontal.
+Ejemplo:
+- Girar izquierda/derecha.
+- Orientacion del cuerpo.
+
+Uso recomendado:
+false, salvo que el jugador remoto se vea girado raro o con orientacion rota.
+
+Ejemplo:
+stabilizeRemoteFlightYaw=false
+
+
+------------------------------------------------------------
+
+directSyncAllDimensions
+Valores:
+- true
+- false
+
+Que hace:
+Permite sincronizar el estado de vuelo de forma mas directa aunque el tracking normal no sea perfecto.
+
+Sirve para:
+- Pruebas con pocos jugadores.
+- Casos donde el receptor no aparece como tracker normal.
+- Servidores hibridos tipo Mohist donde el tracking puede comportarse raro.
+- Dimensiones o situaciones de tracking irregular.
+
+Uso recomendado:
+true
+
+Ejemplo:
+directSyncAllDimensions=true
+
+
+------------------------------------------------------------
+
+resendTrueFlightState
+Valores:
+- true
+- false
+
+Que hace:
+Cuando el servidor detecta flying=true, reenvia ese estado unas veces extra.
+
+Sirve para:
+- Evitar que el cliente pierda el primer packet.
+- Mejorar consistencia al empezar a volar.
+- Ayudar cuando el jugador entra en rango justo cuando el otro empieza a volar.
+
+Uso recomendado:
+true
+
+Ejemplo:
+resendTrueFlightState=true
+
+
+------------------------------------------------------------
+
+trueStateResendCount
+Valores:
+- Numero entero.
+- Ejemplos: 1, 2, 3, 5, 8, 10
+
+Que hace:
+Define cuantas veces se reenvia el estado flying=true si resendTrueFlightState=true.
+
+Uso recomendado:
+3
+
+Valores sugeridos:
+- 1: minimo.
+- 3: recomendado.
+- 5: mas seguro.
+- 8 o 10: agresivo para pruebas si los packets se pierden.
+
+Ejemplo:
+trueStateResendCount=3
+
+
+============================================================
+CONFIG RECOMENDADA FINAL / ESTABLE
+============================================================
+
+Usa esta si el mod ya funciona bien y solo quieres estabilidad.
+
+debug=false
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=ABILITIES
+forceRemoteFlightMotion=false
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=CREATIVE_IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+
+============================================================
+CONFIG DE DEBUG RECOMENDADA
+============================================================
+
+Usa esta para confirmar packets, ACK y reload.
+
+debug=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=ABILITIES
+forceRemoteFlightMotion=false
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=CREATIVE_IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+
+============================================================
+CONFIG FALLBACK / HYBRID
+============================================================
+
+Usa esta si ABILITIES sincroniza packets pero visualmente no cambia suficiente.
+
+debug=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=HYBRID
+forceRemoteFlightMotion=true
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+
+============================================================
+CONFIG AGRESIVA / MOTION_OVERRIDE
+============================================================
+
+Usa esta solo para pruebas si ABILITIES y HYBRID no sirven.
+
+debug=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=MOTION_OVERRIDE
+forceRemoteFlightMotion=true
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=CREATIVE_IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=5
+
+
+============================================================
+CONFIG PARA PROBAR SI IDLE SE VE MEJOR
+============================================================
+
+debug=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=HYBRID
+forceRemoteFlightMotion=true
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=IDLE
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+
+============================================================
+CONFIG PARA FORZAR SIEMPRE CREATIVE_FLY
+============================================================
+
+debug=true
+
+detectVanillaFlying=true
+detectScoreboardTag=true
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true
+
+remoteFlightMode=HYBRID
+forceRemoteFlightMotion=true
+
+remoteFlightMovingMotion=CREATIVE_FLY
+remoteFlightIdleMotion=CREATIVE_FLY
+
+stabilizeRemoteFlightPitch=false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=false
+
+directSyncAllDimensions=true
+resendTrueFlightState=true
+trueStateResendCount=3
+
+
+============================================================
+COMANDO DE RELOAD
+============================================================
+
+/efsync reload
+
+Que hace:
+- Recarga config del servidor.
+- Sincroniza config a clientes conectados.
+- Evita reiniciar Minecraft por cada cambio de config.
+
+Uso recomendado:
+1. Editar config del servidor.
+2. Guardar archivo.
+3. Ejecutar /efsync reload.
+4. Probar con dos jugadores cerca.
+
+
+============================================================
+COMO PROBAR CORRECTAMENTE
+============================================================
+
+Prueba minima:
+1. Cliente A y Cliente B dentro del mismo server.
+2. Ambos cerca y viendose.
+3. Ejecutar /efsync reload.
+4. Hacer que Cliente A vuele.
+5. Cliente B observa si A se ve volando correctamente.
+6. Revisar logs si debug=true.
+
+Logs esperados en debug:
+- SERVER packet sent OK: ConfigSyncPacket
+- CLIENT config sincronizada desde server
+- SERVER received client ACK: type=config
+- SERVER packet sent OK: FlightStatePacket
+- CLIENT received FlightStatePacket
+- SERVER received client ACK: type=flight
+
+============================================================
+NOTAS IMPORTANTES
+============================================================
+
+1. El archivo .jar puede cambiar de nombre sin romper el mod.
+   Ejemplo:
+   EpicFight_FlightSync_BugStudio_1.0.5.jar
+
+2. El modId interno NO deberia cambiarse:
+   epicfight_flight_sync
+
+3. El config siempre se llama:
+   config/epicfight_flight_sync.properties
+
+4. No metas dos versiones del mod al mismo tiempo.
+   Ejemplo incorrecto:
+   estoyharto.jar
+   EpicFight_FlightSync_BugStudio_1.0.5.jar
+
+5. Si hay dos versiones, Forge puede cargar el mod duplicado o causar errores raros.
+
+6. Para servidores, el config importante es el del server.
+   Los clientes deben recibirlo si syncServerConfigToClients=true.
+
+============================================================
+RESUMEN RAPIDO DE VALORES
+============================================================
+
+debug=true/false
+
+detectVanillaFlying=true/false
+detectScoreboardTag=true/false
+flightTag=epicfight_flying
+
+movingSpeedThresholdSq=1.0E-4
+
+syncServerConfigToClients=true/false
+
+remoteFlightMode=ABILITIES/HYBRID/MOTION_OVERRIDE
+forceRemoteFlightMotion=true/false
+
+remoteFlightMovingMotion=FLY/FLOAT/FALL/IDLE/CREATIVE_FLY/CREATIVE_IDLE/NONE
+remoteFlightIdleMotion=FLY/FLOAT/FALL/IDLE/CREATIVE_FLY/CREATIVE_IDLE/NONE
+
+stabilizeRemoteFlightPitch=true/false
+remoteFlightPitch=0.0
+stabilizeRemoteFlightYaw=true/false
+
+directSyncAllDimensions=true/false
+resendTrueFlightState=true/false
+trueStateResendCount=3
