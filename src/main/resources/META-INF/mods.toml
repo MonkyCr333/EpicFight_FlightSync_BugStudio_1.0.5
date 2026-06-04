@@ -1,0 +1,37 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="Open Source"
+
+[[mods]]
+modId="epicfight_flight_sync"
+version="${file.jarVersion}"
+displayName="EpicFight Flight Sync"
+logoFile="logo.png"
+credits="Proyecto firmado por BugStudio."
+authors="bugstudio"
+description='''
+Parche de compatibilidad para Epic Fight que sincroniza el vuelo de jugadores remotos.
+
+Evita que otros jugadores se vean caminando por el aire cuando están volando con creativo, /fly, plugins o tags.
+'''
+
+[[dependencies.epicfight_flight_sync]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.epicfight_flight_sync]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.20.2)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.epicfight_flight_sync]]
+modId="epicfight"
+mandatory=true
+versionRange="[20.14.17,)"
+ordering="AFTER"
+side="BOTH"

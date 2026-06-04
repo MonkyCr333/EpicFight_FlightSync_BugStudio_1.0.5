@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Specification-Title: EpicFight Flight Sync
+Specification-Vendor: bugstudio
+Specification-Version: 1
+Implementation-Title: EpicFight Flight Sync
+Implementation-Version: 1.0.5
+Implementation-Vendor: bugstudio

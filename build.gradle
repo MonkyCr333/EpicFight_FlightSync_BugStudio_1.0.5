@@ -1,0 +1,58 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+group = 'BugStudio'
+version = '1.0.5'
+
+base {
+    archivesName = 'EpicFightFlightSync-BugStudio-1.0.5'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Forge'
+        url = 'https://maven.minecraftforge.net'
+    }
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.4.13'
+
+    compileOnly fg.deobf(files('libs/epic-fight-20.14.17-mc1.20.1-forge.jar'))
+    compileOnly fg.deobf(files('libs/epic-fight-invincible-lib-20.14.8.2-mc1.20.1-forge.jar'))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+jar {
+    archiveFileName = 'EpicFight_FlightSync_BugStudio_1.0.5.jar'
+
+    manifest {
+        attributes([
+            "Specification-Title": "epicfight_flight_sync",
+            "Specification-Vendor": "bugstudio",
+            "Specification-Version": "1",
+            "Implementation-Title": "EpicFight Flight Sync",
+            "Implementation-Version": project.version,
+            "Implementation-Vendor": "bugstudio"
+        ])
+    }
+}
